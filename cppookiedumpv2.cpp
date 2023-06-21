@@ -65,14 +65,14 @@ int dumpCookies(const char* debugUrl, int port) {
     HINTERNET hSession = WinHttpOpen(L"WebSocket Client", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if (hSession == NULL)
     {
-        std::cout << "Failed to open session." << std::endl;
+        std::cout << "Failed to open session" << std::endl;
         return 1;
     }
 
     HINTERNET hConnect = WinHttpConnect(hSession, server.c_str(), port, 0);
     if (hConnect == NULL)
     {
-        std::cout << "Failed to connect to server." << std::endl;
+        std::cout << "Failed to connect to server" << std::endl;
         WinHttpCloseHandle(hSession);
         return 1;
     }
@@ -80,7 +80,7 @@ int dumpCookies(const char* debugUrl, int port) {
     HINTERNET hsess = WinHttpOpenRequest(hConnect, L"GET", convertWS(debugUrl), NULL, NULL, NULL, NULL);
     if (hConnect == NULL)
     {
-        std::cout << "Failed to open request." << std::endl;
+        std::cout << "Failed to open request" << std::endl;
         WinHttpCloseHandle(hSession);
         return 1;
     }
@@ -96,13 +96,13 @@ int dumpCookies(const char* debugUrl, int port) {
     }
 
     if (!WinHttpReceiveResponse(hsess, NULL)) {
-        std::cout << "failed to rec response" << std::endl;
+        std::cout << "Failed to receive response" << std::endl;
         return 1;
     }
     
     HINTERNET hWebSocket = WinHttpWebSocketCompleteUpgrade(hsess, 0);
     if (hWebSocket == NULL) {
-        std::cout << "Failed to complete upgrade" << std::endl;
+        std::cout << "Error completing upgrade to websocket" << std::endl;
         return 1;
     }
     WinHttpCloseHandle(hsess);
@@ -152,14 +152,14 @@ int wmain(int argc, wchar_t* argv[])
     HINTERNET hSession = WinHttpOpen(L"WebSocket Client", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if (hSession == NULL)
     {
-        std::cout << "Failed to open WS session" << std::endl;
+        std::cout << "WinHttpOpen failed" << std::endl;
         return 1;
     }
 
     HINTERNET hConnect = WinHttpConnect(hSession, server.c_str(), port, 0);
     if (hConnect == NULL)
     {
-        std::cout << "Failed to connect to server" << std::endl;
+        std::cout << "WinHttpConnect failed" << std::endl;
         WinHttpCloseHandle(hSession);
         return 1;
     }
@@ -167,7 +167,7 @@ int wmain(int argc, wchar_t* argv[])
     HINTERNET hsess = WinHttpOpenRequest(hConnect, L"GET", L"/json", NULL, NULL, NULL, NULL);
     if (hsess == NULL)
     {
-        std::cout << "Failed to open request" << std::endl;
+        std::cout << "WinHttpOpenRequest failed" << std::endl;
         WinHttpCloseHandle(hSession);
         return 1;
     }
@@ -184,11 +184,9 @@ int wmain(int argc, wchar_t* argv[])
     std::string respage = "";
 
     if (bResults) {
-        bResults = WinHttpReceiveResponse(hsess, NULL);
-        
-    }
-    else {
-        printf("error2");
+        bResults = WinHttpReceiveResponse(hsess, NULL);      
+    } else {
+        printf("Error: %u in WinHttpSendRequest\n", GetLastError());
     }
 
     if (bResults)
@@ -197,25 +195,27 @@ int wmain(int argc, wchar_t* argv[])
         {
             dwSize = 0;
             if (!WinHttpQueryDataAvailable(hsess, &dwSize)) {
-                printf("Error %u in WinHttpQueryDataAvailable.\n", GetLastError());
+                printf("Error: %u in WinHttpQueryDataAvailable\n", GetLastError());
             }
                 
             pszOutBuffer = new char[dwSize + 1];
             if (!pszOutBuffer)
             {
-                printf("Out of memory\n");
+                printf("Error: Out of memory\n");
                 dwSize = 0;
             }
             else
             {
                 ZeroMemory(pszOutBuffer, dwSize + 1);
                 if (!WinHttpReadData(hsess, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded)) {
-                    printf("Error %u in WinHttpReadData.\n", GetLastError());
+                    printf("Error: %u in WinHttpReadData\n", GetLastError());
                 } else
                     respage.append(pszOutBuffer);
                 delete[] pszOutBuffer;
             }
         } while (dwSize > 0);
+    } else {
+        printf("Error: %u in WinHttpReceiveResponse\n", GetLastError());
     }
         
     std::vector<std::string> endpointList;
